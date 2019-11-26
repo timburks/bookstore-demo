@@ -20,15 +20,14 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 
 	"cloud.google.com/go/datastore"
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/grpc"
-)
-
-const (
-	port = ":50051"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 //
@@ -56,6 +55,7 @@ func (s *server) newDataStoreClient(ctx context.Context) (*datastore.Client, err
 }
 
 func (s *server) ListShelves(ctx context.Context, _ *empty.Empty) (*ListShelvesResponse, error) {
+	log.Printf("list shelves")
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *server) ListShelves(ctx context.Context, _ *empty.Empty) (*ListShelvesR
 	var shelves []*Shelf
 	keys, err := client.GetAll(ctx, q, &shelves)
 	for i, k := range keys {
-		shelves[i].Id = k.ID
+		shelves[i].Id = strconv.FormatInt(k.ID, 10)
 	}
 	responses := &ListShelvesResponse{
 		Shelves: shelves,
@@ -73,82 +73,88 @@ func (s *server) ListShelves(ctx context.Context, _ *empty.Empty) (*ListShelvesR
 }
 
 func (s *server) CreateShelf(ctx context.Context, parameters *CreateShelfParameters) (*Shelf, error) {
+	log.Printf("create shelf %+v", parameters)
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	shelf := parameters.Shelf
-	log.Printf("create shelf %+v", shelf)
+	if shelf.Id == "" && shelf.Name == "" && shelf.Theme == "" {
+		return nil, status.Error(codes.InvalidArgument, "empty request body")
+	}
 	var k *datastore.Key
-	if shelf.Id == 0 {
+	if shelf.Id == "" {
 		k = datastore.IncompleteKey("shelf", nil)
 	} else {
-		k = &datastore.Key{Kind: "shelf", ID: shelf.Id}
+		shelfid, _ := strconv.ParseInt(shelf.Id, 10, 64)
+		k = &datastore.Key{Kind: "shelf", ID: shelfid}
 	}
 	k, err = client.Put(ctx, k, shelf)
 	if err != nil {
 		return nil, err
 	}
-	shelf.Id = k.ID
+	shelf.Id = strconv.FormatInt(k.ID, 10)
 	responses := shelf
 	return responses, nil
 }
 
 func (s *server) DeleteShelves(ctx context.Context, _ *empty.Empty) (*empty.Empty, error) {
+	log.Printf("delete shelves")
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
-		log.Printf("DELETE FAILED TO CREATE CLIENT %+v", err)
 		return nil, err
 	}
 	q := datastore.NewQuery("shelf")
 	var shelves []*Shelf
 	keys, err := client.GetAll(ctx, q, &shelves)
 	if err != nil {
-		log.Printf("DELETE FAILED TO GET ALL SHELVES %+v", err)
 		return nil, err
 	}
 	err = client.DeleteMulti(ctx, keys)
 	if err != nil {
-		log.Printf("DELETE FAILED TO DELETE ALL SHELVES %+v", err)
 		return nil, err
 	}
 	q = datastore.NewQuery("book")
 	var books []*Book
 	keys, err = client.GetAll(ctx, q, &books)
 	if err != nil {
-		log.Printf("DELETE FAILED TO GET ALL BOOKS %+v", err)
 		return nil, err
 	}
 	err = client.DeleteMulti(ctx, keys)
 	if err != nil {
-		log.Printf("DELETE FAILED TO DELETE ALL BOOKS %+v", err)
 		return nil, err
 	}
-	log.Printf("DELETE FINISHED WITH ERROR %+v", err)
 	return &empty.Empty{}, err
 }
 
 func (s *server) GetShelf(ctx context.Context, parameters *GetShelfParameters) (*Shelf, error) {
+	log.Printf("get shelf %+v", parameters)
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	k := &datastore.Key{Kind: "shelf", ID: shelfid}
 	var shelf Shelf
 	err = client.Get(ctx, k, &shelf)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.NotFound, "not found")
 	}
-	shelf.Id = k.ID
+	shelf.Id = strconv.FormatInt(k.ID, 10)
 	return &shelf, nil
 }
 
 func (s *server) DeleteShelf(ctx context.Context, parameters *DeleteShelfParameters) (*empty.Empty, error) {
+	log.Printf("delete shelf %+v", parameters)
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	k := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	k := &datastore.Key{Kind: "shelf", ID: shelfid}
 	// delete all the books with this shelf
 	q := datastore.NewQuery("book").Ancestor(k)
 	var books []*Book
@@ -160,16 +166,19 @@ func (s *server) DeleteShelf(ctx context.Context, parameters *DeleteShelfParamet
 }
 
 func (s *server) ListBooks(ctx context.Context, parameters *ListBooksParameters) (responses *ListBooksResponse, err error) {
+	log.Printf("list books %+v", parameters)
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ancestor := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	ancestor := &datastore.Key{Kind: "shelf", ID: shelfid}
 	q := datastore.NewQuery("book").Ancestor(ancestor)
 	var books []*Book
 	keys, err := client.GetAll(ctx, q, &books)
 	for i, k := range keys {
-		books[i].Id = k.ID
+		books[i].Id = strconv.FormatInt(k.ID, 10)
 	}
 	responses = &ListBooksResponse{
 		Books: books,
@@ -178,57 +187,67 @@ func (s *server) ListBooks(ctx context.Context, parameters *ListBooksParameters)
 }
 
 func (s *server) CreateBook(ctx context.Context, parameters *CreateBookParameters) (*Book, error) {
+	log.Printf("create book %+v", parameters)
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ancestor := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	ancestor := &datastore.Key{Kind: "shelf", ID: shelfid}
 
 	book := parameters.Book
 	var k *datastore.Key
-	if book.Id == 0 {
+	if book.Id == "" {
 		k = datastore.IncompleteKey("book", ancestor)
 	} else {
-		k = &datastore.Key{Kind: "book", ID: book.Id, Parent: ancestor}
+		bookid, _ := strconv.ParseInt(book.Id, 10, 64)
+		k = &datastore.Key{Kind: "book", ID: bookid, Parent: ancestor}
 	}
 	k, err = client.Put(ctx, k, book)
 	if err != nil {
 		return nil, err
 	}
-	book.Id = k.ID
+	book.Id = strconv.FormatInt(k.ID, 10)
 	return book, nil
 }
 
 func (s *server) GetBook(ctx context.Context, parameters *GetBookParameters) (*Book, error) {
+	log.Printf("get book %+v", parameters)
+
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ancestor := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
-	k := &datastore.Key{Kind: "book", ID: parameters.Book, Parent: ancestor}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	ancestor := &datastore.Key{Kind: "shelf", ID: shelfid}
+	bookid, _ := strconv.ParseInt(parameters.Book, 10, 64)
+	k := &datastore.Key{Kind: "book", ID: bookid, Parent: ancestor}
 	var book Book
 	err = client.Get(ctx, k, &book)
-
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.NotFound, "not found")
 	}
-	book.Id = k.ID
+	book.Id = strconv.FormatInt(k.ID, 10)
 	return &book, nil
 }
 
 func (s *server) DeleteBook(ctx context.Context, parameters *DeleteBookParameters) (*empty.Empty, error) {
+	log.Printf("delete book %+v", parameters)
 	client, err := s.newDataStoreClient(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ancestor := &datastore.Key{Kind: "shelf", ID: parameters.Shelf}
-	k := &datastore.Key{Kind: "book", ID: parameters.Book, Parent: ancestor}
+	shelfid, _ := strconv.ParseInt(parameters.Shelf, 10, 64)
+	ancestor := &datastore.Key{Kind: "shelf", ID: shelfid}
+	bookid, _ := strconv.ParseInt(parameters.Book, 10, 64)
+	k := &datastore.Key{Kind: "book", ID: bookid, Parent: ancestor}
 	err = client.Delete(ctx, k)
 	return &empty.Empty{}, err
 }
 
 // RunServer ...
-func RunServer() {
+func RunServer(port string) {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

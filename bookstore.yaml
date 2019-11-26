@@ -52,8 +52,7 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
           description: A shelf resource.
@@ -76,8 +75,7 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         default:
           description: An empty response body.
@@ -91,8 +89,7 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
           description: List of books on the specified shelf.
@@ -115,8 +112,7 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
           description: A newly created book resource.
@@ -147,15 +143,13 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
         - description: ID of the book to get from the shelf.
           in: path
           name: book
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         '200':
           description: A book resource.
@@ -178,15 +172,13 @@ paths:
           name: shelf
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
         - description: ID of the book to delete from the shelf.
           in: path
           name: book
           required: true
           schema:
-            type: integer
-            format: int64
+            type: string
       responses:
         default:
           description: An empty response body.
@@ -197,8 +189,7 @@ components:
     book:
       properties:
         id:
-          type: integer
-          format: int64
+          type: string
         author:
           type: string
         title:
@@ -226,8 +217,7 @@ components:
     shelf:
       properties:
         id:
-          type: integer
-          format: int64
+          type: string
         name:
           type: string
         theme:

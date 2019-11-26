@@ -18,6 +18,10 @@ import (
 	"github.com/timburks/bookstore-demo/bookstore"
 )
 
+const (
+	port = ":50051"
+)
+
 func main() {
-	bookstore.RunServer()
+	bookstore.RunServer(port)
 }
