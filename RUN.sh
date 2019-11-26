@@ -9,7 +9,7 @@
 export ANNOTATIONS="third-party/googleapis"
 
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
-	--go_out=plugins=grpc:bookstore \
+	--go_out=plugins=grpc:rpc \
 	bookstore.proto
 
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \

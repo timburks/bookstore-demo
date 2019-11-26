@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "rpc";
+
 package bookstore;
 
 import "google/api/annotations.proto";

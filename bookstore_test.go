@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/timburks/bookstore-demo/client/bookstore"
+	bookstore "github.com/timburks/bookstore-demo/http"
 )
 
 const service = "http://localhost:51051"

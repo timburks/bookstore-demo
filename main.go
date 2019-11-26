@@ -14,14 +14,12 @@
 
 package main
 
-import (
-	"github.com/timburks/bookstore-demo/bookstore"
-)
+import "github.com/timburks/bookstore-demo/rpc"
 
 const (
 	port = ":50051"
 )
 
 func main() {
-	bookstore.RunServer(port)
+	rpc.RunServer(port)
 }
