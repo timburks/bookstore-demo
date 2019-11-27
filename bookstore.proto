@@ -6,7 +6,6 @@ package bookstore;
 
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
-import "google/protobuf/descriptor.proto";
 
 message Book {
   string id = 1;

@@ -28,7 +28,7 @@ static_resources:
                 http_filters:
                   - name: envoy.grpc_json_transcoder
                     config:
-                      proto_descriptor: "/tmp/envoy/proto.pb"
+                      proto_descriptor: "proto.pb"
                       services: ["bookstore.Bookstore"]
                       print_options:
                         add_whitespace: true
@@ -54,5 +54,5 @@ static_resources:
                       # WARNING: "docker.for.mac.localhost" has been deprecated from Docker v18.03.0.
                       # If you're running an older version of Docker, please use "docker.for.mac.localhost" instead.
                       # Reference: https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-18030-ce-mac59-2018-03-26
-                      address: host.docker.internal
+                      address: localhost
                       port_value: 50051
