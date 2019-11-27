@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# First get some dependencies.
+go get -u google.golang.org/grpc
+go get -u github.com/golang/protobuf/protoc-gen-go
+
 # TODO: doesn't support OAS3
 #openapi2proto -spec bookstore.yaml -annotate > bookstore.proto
 
@@ -17,5 +21,5 @@ protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 protoc --proto_path=. --proto_path=${ANNOTATIONS} \
 	--include_imports \
 	--include_source_info \
-	--descriptor_set_out=envoy-proxy/proto.pb \
+	--descriptor_set_out=envoy/proto.pb \
 	bookstore.proto
