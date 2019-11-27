@@ -25,7 +25,7 @@ import (
 	bookstore "github.com/timburks/bookstore-demo/http"
 )
 
-const service = "http://localhost:80"
+const service = "http://35.247.4.168:80"
 
 //const service = "http://generated-bookstore.appspot.com"
 

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -103,7 +102,6 @@ func (client *Client) CreateShelf(
 		}
 		result := &Shelf{}
 		err = json.Unmarshal(body, result)
-		log.Printf("UNMARSHALLING %+s", string(body))
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +121,6 @@ func (client *Client) DeleteShelves() (
 	if err != nil {
 		return
 	}
-	log.Printf("DELETE %+v", req)
 	resp, err := client.client.Do(req)
 	if err != nil {
 		return
@@ -380,7 +377,6 @@ func (client *Client) DeleteBook(
 	if err != nil {
 		return
 	}
-	log.Printf("DELETE BOOK REQUEST %+v", req)
 	resp, err := client.client.Do(req)
 	if err != nil {
 		return
