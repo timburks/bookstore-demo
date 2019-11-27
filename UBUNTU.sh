@@ -8,10 +8,16 @@ sudo apt-get update
 sudo apt-get install unzip -y
 
 curl https://github.com/protocolbuffers/protobuf/releases/download/v3.11.0/protoc-3.11.0-linux-x86_64.zip -o protoc.zip -L
-unzip -d /usr/local protoc.zip 
+mkdir -p $HOME/local/protoc
+unzip -d $HOME/local/protoc protoc.zip 
 
-curl https://dl.google.com/go/go1.13.4.linux-amd64.tar.gz -o go.tar.gz -L
+curl https://dl.google.com/go/go1.13.4.linux-amd64.tar.gz -o go.tgz -L
+tar xzf go.tgz -C $HOME/local
 
+mkdir -p $HOME/go
+echo "export GOPATH=\$HOME/go" >> ~/.profile
+echo "export PATH=\$GOPATH/bin:\$HOME/local/protoc/bin:\$HOME/local/go/bin:\$PATH" >> ~/.profile
+source ~/.profile
 
 sudo apt-get install -y \
   software-properties-common \
